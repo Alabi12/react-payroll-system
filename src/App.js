@@ -59,7 +59,7 @@ function App() {
             <th>Taxable Income</th>
             <th>First Tier </th>
             <th>Second Tier </th>
-            <th>Profident fund</th>
+            <th>Provident fund</th>
             <th>Income Tax</th>
             <th>Net Pay</th>
           </tr>
