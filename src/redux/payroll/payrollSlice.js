@@ -9,6 +9,7 @@ const initialState = {
   pensionTier3: 0,
   incomeTax: 0,
   netPay: 0,
+  calculatedPayroll: null, // Added the calculatedPayroll initial state
 };
 
 const payrollSlice = createSlice({
@@ -21,23 +22,13 @@ const payrollSlice = createSlice({
     setAllowance: (state, action) => {
       state.allowance = action.payload;
     },
-    calculatePayroll: (state) => {
-      state.taxableIncome = state.basicSalary + state.allowance;
-      state.pensionTier1 = 0.1 * state.basicSalary;
-      state.pensionTier2 = 0.05 * state.basicSalary;
-      state.pensionTier3 = 0.02 * state.basicSalary;
-      state.incomeTax = 0.2 * state.taxableIncome;
-      state.netPay =
-        state.taxableIncome -
-        state.pensionTier1 -
-        state.pensionTier2 -
-        state.pensionTier3 -
-        state.incomeTax;
+    // Other reducers...
+    setCalculatedPayroll: (state, action) => {
+      state.calculatedPayroll = action.payload;
     },
   },
 });
 
-export const { setBasicSalary, setAllowance, calculatePayroll } =
+export const { setBasicSalary, setAllowance, setCalculatedPayroll } =
   payrollSlice.actions;
-
 export default payrollSlice.reducer;

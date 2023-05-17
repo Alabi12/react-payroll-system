@@ -1,4 +1,6 @@
 import React, { useEffect } from "react";
+import { setCalculatedPayroll } from "./redux/payroll/payrollSlice";
+import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { setBasicSalary, setAllowance } from "./redux/payroll/payrollSlice";
 
@@ -7,6 +9,7 @@ function App() {
   const {
     basicSalary,
     allowance,
+    grossIncome,
     taxableIncome,
     pensionTier1,
     pensionTier2,
@@ -21,10 +24,10 @@ function App() {
 
   const fetchPayrolls = async () => {
     try {
-      const response = await fetch("http://localhost:3001/payrolls");
-      const data = await response.json();
+      const response = await axios.get("http://localhost:3001/payrolls");
+      const data = response.data;
       console.log(data);
-      // You can dispatch an action to store the retrieved payrolls in the Redux store if needed.
+      // Dispatch an action to store the retrieved payrolls in the Redux store if needed.
     } catch (error) {
       console.log(error);
     }
@@ -40,21 +43,18 @@ function App() {
 
   const handleCalculateClick = async () => {
     try {
-      const response = await fetch("http://192.168.255.185:3000", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          basic_salary: basicSalary,
-          allowance: allowance,
-        }),
+      const response = await axios.post("http://localhost:3000", {
+        basic_salary: basicSalary,
+        allowance: allowance,
       });
-      const data = await response.json();
+      const data = response.data;
       console.log(data);
-      // You can dispatch an action to store the calculated payroll in the Redux store if needed.
+
+      // Dispatch the action to store the calculated payroll in the Redux store
+      dispatch(setCalculatedPayroll(data));
     } catch (error) {
-      console.log(error);
+      console.error(error.message); // Log the error message
+      // Handle the error appropriately (e.g., show an error message to the user)
     }
   };
 
@@ -83,6 +83,9 @@ function App() {
       <table>
         <thead>
           <tr>
+            <th>Basic Salary</th>
+            <th>Allowance</th>
+            <th>Gross Income</th>
             <th>Taxable Income</th>
             <th>Pension Tier 1</th>
             <th>Pension Tier 2</th>
@@ -93,6 +96,9 @@ function App() {
         </thead>
         <tbody>
           <tr>
+            <td>{basicSalary}</td>
+            <td>{allowance}</td>
+            <td>{grossIncome}</td>
             <td>{taxableIncome}</td>
             <td>{pensionTier1}</td>
             <td>{pensionTier2}</td>
