@@ -1,34 +1,21 @@
-import { createSlice } from "@reduxjs/toolkit";
+// reducers.js
+import { combineReducers } from "redux";
 
 const initialState = {
-  basicSalary: 0,
-  allowance: 0,
-  taxableIncome: 0,
-  pensionTier1: 0,
-  pensionTier2: 0,
-  pensionTier3: 0,
-  incomeTax: 0,
-  netPay: 0,
-  calculatedPayroll: null, // Added the calculatedPayroll initial state
+  basicSalary: 0, // Initial value for basicSalary
 };
 
-const payrollSlice = createSlice({
-  name: "payroll",
-  initialState,
-  reducers: {
-    setBasicSalary: (state, action) => {
-      state.basicSalary = action.payload;
-    },
-    setAllowance: (state, action) => {
-      state.allowance = action.payload;
-    },
-    // Other reducers...
-    setCalculatedPayroll: (state, action) => {
-      state.calculatedPayroll = action.payload;
-    },
-  },
+const basicSalaryReducer = (state = initialState.basicSalary, action) => {
+  switch (action.type) {
+    // Handle relevant actions for basicSalary here
+    default:
+      return state;
+  }
+};
+
+const rootReducer = combineReducers({
+  basicSalary: basicSalaryReducer,
+  // Add other reducers here if you have any
 });
 
-export const { setBasicSalary, setAllowance, setCalculatedPayroll } =
-  payrollSlice.actions;
-export default payrollSlice.reducer;
+export default rootReducer;

@@ -1,115 +1,208 @@
-import React, { useEffect } from "react";
-import { setCalculatedPayroll } from "./redux/payroll/payrollSlice";
-import axios from "axios";
-import { useDispatch, useSelector } from "react-redux";
-import { setBasicSalary, setAllowance } from "./redux/payroll/payrollSlice";
+import React, { useEffect, useState } from "react";
 
-function App() {
-  const dispatch = useDispatch();
-  const {
-    basicSalary,
-    allowance,
-    grossIncome,
-    taxableIncome,
-    pensionTier1,
-    pensionTier2,
-    pensionTier3,
-    incomeTax,
-    netPay,
-  } = useSelector((state) => state.payroll);
+const App = () => {
+  const [payrolls, setPayrolls] = useState([]);
+  const [newPayroll, setNewPayroll] = useState({
+    basic_salary: "",
+    allowance: "",
+    taxable_income: "",
+    pension_tier1: "",
+    pension_tier2: "",
+    pension_tier3: "",
+    income_tax: "",
+    net_pay: "",
+  });
 
   useEffect(() => {
-    fetchPayrolls();
+    const storedPayrolls = localStorage.getItem("payrolls");
+    if (storedPayrolls) {
+      setPayrolls(JSON.parse(storedPayrolls));
+    }
   }, []);
 
-  const fetchPayrolls = async () => {
+  useEffect(() => {
+    localStorage.setItem("payrolls", JSON.stringify(payrolls));
+  }, [payrolls]);
+
+  const fetchPayrollData = async () => {
     try {
-      const response = await axios.get("http://localhost:3001/payrolls");
-      const data = response.data;
-      console.log(data);
-      // Dispatch an action to store the retrieved payrolls in the Redux store if needed.
+      const response = await fetch("http://localhost:3001/api/v1/payrolls");
+      const data = await response.json();
+      setPayrolls(data);
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching payroll data:", error);
     }
   };
 
-  const handleBasicSalaryChange = (e) => {
-    dispatch(setBasicSalary(Number(e.target.value)));
-  };
-
-  const handleAllowanceChange = (e) => {
-    dispatch(setAllowance(Number(e.target.value)));
-  };
-
-  const handleCalculateClick = async () => {
+  const postPayrollData = async (payrollData) => {
     try {
-      const response = await axios.post("http://localhost:3000", {
-        basic_salary: basicSalary,
-        allowance: allowance,
+      const response = await fetch("http://localhost:3001/api/v1/payrolls", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payrollData),
       });
-      const data = response.data;
-      console.log(data);
 
-      // Dispatch the action to store the calculated payroll in the Redux store
-      dispatch(setCalculatedPayroll(data));
+      if (!response.ok) {
+        throw new Error("Error posting payroll data");
+      }
+
+      const data = await response.json();
+      setPayrolls([...payrolls, data]);
+
+      // Update local storage
+      const updatedPayrolls = [...payrolls, data];
+      localStorage.setItem("payrolls", JSON.stringify(updatedPayrolls));
     } catch (error) {
-      console.error(error.message); // Log the error message
-      // Handle the error appropriately (e.g., show an error message to the user)
+      console.error(error);
     }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    postPayrollData(newPayroll);
+    setNewPayroll({
+      basic_salary: "",
+      allowance: "",
+      taxable_income: "",
+      pension_tier1: "",
+      pension_tier2: "",
+      pension_tier3: "",
+      income_tax: "",
+      net_pay: "",
+    });
   };
 
   return (
     <div>
-      <h1>Payroll Calculator</h1>
-      <label htmlFor="basicSalary">Basic Salary:</label>
-      <input
-        type="number"
-        id="basicSalary"
-        value={basicSalary}
-        onChange={handleBasicSalaryChange}
-      />
-      <br />
-      <label htmlFor="allowance">Allowance:</label>
-      <input
-        type="number"
-        id="allowance"
-        value={allowance}
-        onChange={handleAllowanceChange}
-      />
-      <br />
-      <button onClick={handleCalculateClick}>Calculate</button>
-      <br />
-      <h2>Payroll Results</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Basic Salary</th>
-            <th>Allowance</th>
-            <th>Gross Income</th>
-            <th>Taxable Income</th>
-            <th>Pension Tier 1</th>
-            <th>Pension Tier 2</th>
-            <th>Pension Tier 3</th>
-            <th>Income Tax</th>
-            <th>Net Pay</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>{basicSalary}</td>
-            <td>{allowance}</td>
-            <td>{grossIncome}</td>
-            <td>{taxableIncome}</td>
-            <td>{pensionTier1}</td>
-            <td>{pensionTier2}</td>
-            <td>{pensionTier3}</td>
-            <td>{incomeTax}</td>
-            <td>{netPay}</td>
-          </tr>
-        </tbody>
-      </table>
+      {payrolls.length > 0 ? (
+        <ul>
+          {payrolls.map((payroll, index) => (
+            <li key={index}>
+              Basic Salary: {payroll.basic_salary}
+              <br />
+              Allowance: {payroll.allowance}
+              <br />
+              Taxable Income: {payroll.taxable_income}
+              <br />
+              Pension Tier 1: {payroll.pension_tier1}
+              <br />
+              Pension Tier 2: {payroll.pension_tier2}
+              <br />
+              Pension Tier 3: {payroll.pension_tier3}
+              <br />
+              Income Tax: {payroll.income_tax}
+              <br />
+              Net Pay: {payroll.net_pay}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No payroll data available.</p>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        <label>
+          Basic Salary:
+          <input
+            type="text"
+            name="basic_salary"
+            value={newPayroll.basic_salary}
+            onChange={(e) =>
+              setNewPayroll({ ...newPayroll, basic_salary: e.target.value })
+            }
+          />
+        </label>
+        <br />
+        <label>
+          Allowance:
+          <input
+            type="text"
+            name="allowance"
+            value={newPayroll.allowance}
+            onChange={(e) =>
+              setNewPayroll({ ...newPayroll, allowance: e.target.value })
+            }
+          />
+        </label>
+        <br />
+        <label>
+          Taxable Income:
+          <input
+            type="text"
+            name="taxable_income"
+            value={newPayroll.taxable_income}
+            onChange={(e) =>
+              setNewPayroll({ ...newPayroll, taxable_income: e.target.value })
+            }
+          />
+        </label>
+        <br />
+        <label>
+          Pension Tier 1:
+          <input
+            type="text"
+            name="pension_tier1"
+            value={newPayroll.pension_tier1}
+            onChange={(e) =>
+              setNewPayroll({ ...newPayroll, pension_tier1: e.target.value })
+            }
+          />
+        </label>
+        <br />
+        <label>
+          Pension Tier 2:
+          <input
+            type="text"
+            name="pension_tier2"
+            value={newPayroll.pension_tier2}
+            onChange={(e) =>
+              setNewPayroll({ ...newPayroll, pension_tier2: e.target.value })
+            }
+          />
+        </label>
+        <br />
+        <label>
+          Pension Tier 3:
+          <input
+            type="text"
+            name="pension_tier3"
+            value={newPayroll.pension_tier3}
+            onChange={(e) =>
+              setNewPayroll({ ...newPayroll, pension_tier3: e.target.value })
+            }
+          />
+        </label>
+        <br />
+        <label>
+          Income Tax:
+          <input
+            type="text"
+            name="income_tax"
+            value={newPayroll.income_tax}
+            onChange={(e) =>
+              setNewPayroll({ ...newPayroll, income_tax: e.target.value })
+            }
+          />
+        </label>
+        <br />
+        <label>
+          Net Pay:
+          <input
+            type="text"
+            name="net_pay"
+            value={newPayroll.net_pay}
+            onChange={(e) =>
+              setNewPayroll({ ...newPayroll, net_pay: e.target.value })
+            }
+          />
+        </label>
+        <br />
+        <button type="submit">Submit</button>
+      </form>
     </div>
   );
-}
+};
 
 export default App;
